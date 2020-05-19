@@ -1,4 +1,6 @@
 import System.Environment
+import System.IO
+
 
 -- definition of Ninja data type
 data Ninja = Ninja {name:: String, country:: Char,
@@ -27,9 +29,20 @@ earth = []
 
 main :: IO()
 main = do
-    x <- getArgs
-    print x
+
+    args <- getArgs
+    let fileName = head args
+    print fileName
+    handle <- openFile fileName ReadMode
+    contents <- hGetContents handle 
+    let lineContent = lines contents
+    print (length lineContent)
+    let x = (length lineContent) / 5
+    
+
     return ()
+
+
 
 
 mainLoop :: IO()
