@@ -1,3 +1,5 @@
+module Demo where
+
 import System.Environment
 import System.IO
 
@@ -33,18 +35,8 @@ fillNinjas []           = []
 fillNinjas [n]          = [fillNinjaHelper n]
 fillNinjas (n:ns)       = fillNinjaHelper n : fillNinjas ns
 
-
-countryToString :: Char -> String
-countryToString c
-    | c == 'e' || c == 'E' = "Earth"
-    | c == 'l' || c == 'L' = "Lightning"
-    | c == 'w' || c == 'W' = "Water"
-    | c == 'n' || c == 'N' = "Wind"
-    | c == 'f' || c == 'F' = "Fire"
-
-
 fillNinjaHelper :: String -> Ninja
-fillNinjaHelper n = Ninja (ninjaName) (ninjaCountry) "Junior" (ninjaExam1) (ninjaExam2) (ninjaAbility1) (ninjaAbility2) 0
+fillNinjaHelper n = Ninja (ninjaName) (ninjaCountry) "junior" (ninjaExam1) (ninjaExam2) (ninjaAbility1) (ninjaAbility2) 0
     where
         items = words n
         ninjaName = items !! 0
@@ -107,8 +99,7 @@ mainLoop ninjas = do
 viewCountrysNinjaInformation :: Ninjas -> IO()
 viewCountrysNinjaInformation ninjas = do
     putStrLn "Enter the country code: "
-    input <- getLine
-    let country = input !! 0
+    country <- getChar
     let (fire, lightning, water, wind, earth) = ninjas
     if elem country ['F', 'f']
         then printCountrysNinjaInformation fire
@@ -129,28 +120,8 @@ viewCountrysNinjaInformation ninjas = do
             printCountrysNinjaInformation :: [Ninja] -> IO()
             printCountrysNinjaInformation ninjas = do
                 let ordered = iSort' ordering ninjas
-                putStrLn (shower ordered)
-                    where
-                        shower :: [Ninja] -> String
-                        shower []       = ""
-                        shower [ninja]  = showerHelper ninja
-                        shower (n:ns)   = showerHelper n ++ shower ns
-                            
-                        showerHelper :: Ninja -> String
-                        showerHelper ninja = (name ninja) ++ ", Score: " ++  show (getScore ninja) ++ ", Status: " ++ (status ninja) ++ ", Round: " ++ show (r ninja) ++ "\n" ++ toAppend
-                            where
-                                toAppend = if (status ninja) == "Journeyman"
-                                            then (countryToString (country ninja)) ++ "country cannot be included in a fight\n"
-                                            else ""
-
-
-                        
-
-                
-                -- putStrLn ((name (ordered !! 0)) ++ show (getScore (ordered !! 0)))
-                -- putStrLn ((name (ordered !! 1)) ++ show (getScore (ordered !! 1)))
-                -- putStrLn ((name (ordered !! 2)) ++ show (getScore (ordered !! 2)))
-                -- putStrLn "aloo"
+                putStrLn name (ordered !! 0)
+                putStrLn "aloo"
 
 
             ordering :: Ninja -> Ninja -> Bool
@@ -200,8 +171,7 @@ abilityToScore ability = case ability of
     "Fire"      -> 40.0
     "Water"     -> 30.0
     "Blade"     -> 20.0
-    "Summon"    -> 50.0
-    "Storm"     -> 10.0
+    "Summon"    -> 10.0
     "Rock"      -> 20.0
     _           -> error "Unknown Ability"
 
@@ -241,5 +211,24 @@ main = do
  
 
         
+
+
+
+    
+        
+
+
+
+
+
+
+
+ 
+
+    
+        
+
+
+
 
 
