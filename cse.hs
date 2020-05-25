@@ -75,7 +75,7 @@ mainLoop ninjas = do
     putStrLn "a) View a Country's Ninja Information"
     putStrLn "b) View All Countries' Ninja Information"
     putStrLn "c) Make a Round Between Ninjas"
-    putStrLn "b) Make a Round Between Countries"
+    putStrLn "d) Make a Round Between Countries"
     putStrLn "e) Exit"
     putStrLn "Enter the action:"
     action <- getLine
@@ -85,7 +85,7 @@ mainLoop ninjas = do
             mainLoop ninjas
         else if action == "b" || action == "B"
             then do
-                viewAllCountrysNinjaInformation
+                viewAllCountrysNinjaInformation ninjas
                 mainLoop ninjas
             else if action == "c" || action == "C"
                 then do
@@ -153,32 +153,32 @@ viewCountrysNinjaInformation ninjas = do
                 -- putStrLn "aloo"
 
 
-            ordering :: Ninja -> Ninja -> Bool
-            ordering n0 n1 = result
-                where
-                    n0Score = getScore n0
-                    n1Score = getScore n1
-                    
-                    roundFlag = r n0 < r n1
-                    scoreFlag = n0Score > n1Score
+ordering :: Ninja -> Ninja -> Bool
+ordering n0 n1 = result
+    where
+        n0Score = getScore n0
+        n1Score = getScore n1
+        
+        roundFlag = r n0 < r n1
+        scoreFlag = n0Score > n1Score
 
-                    result 
-                        | roundFlag == True     = True
-                        | scoreFlag == True     = True
-                        | scoreFlag == False    = False
-                        | otherwise             = False
-
-
-            ins' :: (Ninja -> Ninja -> Bool) -> Ninja -> [Ninja] -> [Ninja]
-            ins' p n []             = [n]
-            ins' p n xs@(x':xs')    
-                | p n x'            = n : xs
-                | otherwise         = x' : ins' p n xs'
+        result 
+            | roundFlag == True     = True
+            | scoreFlag == True     = True
+            | scoreFlag == False    = False
+            | otherwise             = False
 
 
-            iSort' :: (Ninja -> Ninja -> Bool) -> [Ninja] -> [Ninja]
-            iSort' p [] = []
-            iSort' p (x:xs) = ins' p x (iSort' p xs)
+ins' :: (Ninja -> Ninja -> Bool) -> Ninja -> [Ninja] -> [Ninja]
+ins' p n []             = [n]
+ins' p n xs@(x':xs')    
+    | p n x'            = n : xs
+    | otherwise         = x' : ins' p n xs'
+
+
+iSort' :: (Ninja -> Ninja -> Bool) -> [Ninja] -> [Ninja]
+iSort' p [] = []
+iSort' p (x:xs) = ins' p x (iSort' p xs)
 
 
 
@@ -206,8 +206,26 @@ abilityToScore ability = case ability of
     _           -> error "Unknown Ability"
 
 
-viewAllCountrysNinjaInformation :: IO()
-viewAllCountrysNinjaInformation = return ()
+
+viewAllCountrysNinjaInformation :: Ninjas -> IO()
+viewAllCountrysNinjaInformation ninjas = do
+    let (fire, lightning, water, wind, earth) = ninjas
+    let allNinjas = merge' (merge' (merge' (merge' fire lightning) water) wind) earth
+        
+
+
+    let ordered = iSort' ordering allNinjas
+    putStrLn (shower ordered)
+        where
+            merge' [] ys = ys
+            merge' (x:xs) ys = x:merge' ys xs
+            shower :: [Ninja] -> String
+            shower []       = ""
+            shower [ninja]  = showerHelper ninja
+            shower (n:ns)   = showerHelper n ++ shower ns
+                
+            showerHelper :: Ninja -> String
+            showerHelper ninja = (name ninja) ++ ", Score: " ++  show (getScore ninja) ++ ", Status: " ++ (status ninja) ++ ", Round: " ++ show (r ninja) ++ "\n"
 
 makeRoundBetweenNinjas :: IO()
 makeRoundBetweenNinjas = return ()
