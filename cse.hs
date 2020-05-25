@@ -1,3 +1,4 @@
+
 import System.Environment
 import System.IO
 
@@ -27,7 +28,6 @@ data Ninja = Ninja {name:: String, country:: Char,
 
 
 
-
 fillNinjas :: [String] -> [Ninja]
 fillNinjas []           = []
 fillNinjas [n]          = [fillNinjaHelper n]
@@ -41,6 +41,24 @@ countryToString c
     | c == 'w' || c == 'W' = "Water"
     | c == 'n' || c == 'N' = "Wind"
     | c == 'f' || c == 'F' = "Fire"
+    | otherwise            = error "Invalid Country name with " ++ c
+
+getCountryNinjasFromChar :: Ninjas -> Char -> [Ninja]
+getCountryNinjasFromChar (fire, lightning, water, wind, earth) c
+    | elem c ['e', 'E'] = earth
+    | elem c ['l', 'L'] = lightning
+    | elem c ['w', 'W'] = water
+    | elem c ['n', 'N'] = wind
+    | elem c ['f', 'F'] = fire
+    | otherwise         = error "Invalid Country Name with " ++ c
+
+
+getNinjaFromNinjaListWithName :: [Ninja] -> String -> Ninja
+getNinjaFromNinjaListWithName [] search     = error ("Invalid Ninja Name with " ++ search)
+getNinjaFromNinjaListWithName (n:ns) search = if name n == search
+                                                then n
+                                                else getNinjaFromNinjaListWithName ns search
+
 
 
 fillNinjaHelper :: String -> Ninja
@@ -104,18 +122,7 @@ viewCountrysNinjaInformation ninjas = do
     putStrLn "Enter the country code: "
     input <- getLine
     let country = input !! 0
-    let (fire, lightning, water, wind, earth) = ninjas
-    if elem country ['F', 'f']
-        then printCountrysNinjaInformation fire
-        else if elem country ['L', 'l']
-            then printCountrysNinjaInformation lightning
-            else if  elem country ['W', 'w']
-                then printCountrysNinjaInformation water
-                else if  elem country ['N', 'n']
-                    then printCountrysNinjaInformation wind
-                    else if elem country ['E', 'e']
-                        then printCountrysNinjaInformation earth
-                        else error "Unknown Country Code"
+    printCountrysNinjaInformation (getCountryNinjasFromChar ninjas country)
     mainLoop ninjas
 
         where    
@@ -216,6 +223,8 @@ viewAllCountrysNinjaInformation ninjas = do
             showerHelper :: Ninja -> String
             showerHelper ninja = (name ninja) ++ ", Score: " ++  show (getScore ninja) ++ ", Status: " ++ (status ninja) ++ ", Round: " ++ show (r ninja) ++ "\n"
 
+
+
 makeRoundBetweenNinjas :: IO()
 makeRoundBetweenNinjas = return ()
 
@@ -241,6 +250,8 @@ main = do
     let water = filter (\a -> country a == 'W') ninjas
     let wind = filter (\a -> country a == 'N') ninjas
     let earth = filter (\a -> country a == 'E') ninjas
+
+    
 
     mainLoop (fire, lightning, water, wind, earth)
 
