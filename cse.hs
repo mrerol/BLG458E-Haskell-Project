@@ -82,25 +82,20 @@ mainLoop ninjas = do
     if action == "a" || action == "A"
         then do
             viewCountrysNinjaInformation ninjas
-            mainLoop ninjas
         else if action == "b" || action == "B"
             then do
                 viewAllCountrysNinjaInformation ninjas
-                mainLoop ninjas
             else if action == "c" || action == "C"
                 then do
                     makeRoundBetweenNinjas
-                    mainLoop ninjas
                 else if action == "d" || action == "D"
                     then do 
                         makeRoundBetweenCountries
-                        mainLoop ninjas
                     else if action == "e" || action == "E"
                         then return ()
                         else
                             do
                                 putStrLn "Error! Proper inputs [a/A, b/B, c/C, d/D, e/E]"
-                                mainLoop ninjas
 
 
                 
@@ -121,11 +116,9 @@ viewCountrysNinjaInformation ninjas = do
                     else if elem country ['E', 'e']
                         then printCountrysNinjaInformation earth
                         else error "Unknown Country Code"
-
+    mainLoop ninjas
 
         where    
-    
-
             printCountrysNinjaInformation :: [Ninja] -> IO()
             printCountrysNinjaInformation ninjas = do
                 let ordered = iSort' ordering ninjas
@@ -143,10 +136,6 @@ viewCountrysNinjaInformation ninjas = do
                                             then (countryToString (country ninja)) ++ "country cannot be included in a fight\n"
                                             else ""
 
-
-                        
-
-                
                 -- putStrLn ((name (ordered !! 0)) ++ show (getScore (ordered !! 0)))
                 -- putStrLn ((name (ordered !! 1)) ++ show (getScore (ordered !! 1)))
                 -- putStrLn ((name (ordered !! 2)) ++ show (getScore (ordered !! 2)))
