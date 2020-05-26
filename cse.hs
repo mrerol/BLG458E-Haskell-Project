@@ -69,6 +69,10 @@ getNinjaFromNameAndCountry (n:ns) searchName searchCountry = if ((name n) == sea
                                                                 else getNinjaFromNameAndCountry ns searchName searchCountry
 
 
+getOneNinja :: [Ninja] -> Ninja
+getOneNinja   []                              = error ("Invalid Ninja Name with ")
+getOneNinja   (x:xs)                          = x
+
 
 fillNinjaHelper :: String -> Ninja
 fillNinjaHelper n = Ninja (ninjaName) (ninjaCountry) "Junior" (ninjaExam1) (ninjaExam2) (ninjaAbility1) (ninjaAbility2) 0
@@ -117,7 +121,7 @@ mainLoop ninjas = do
                     makeRoundBetweenNinjas ninjas
                 else if action == "d" || action == "D"
                     then do 
-                        makeRoundBetweenCountries
+                        makeRoundBetweenCountries ninjas
                     else if action == "e" || action == "E"
                         then return ()
                         else
@@ -307,8 +311,45 @@ winRound ninja = Ninja (name ninja) (country ninja) (status) (exam1 ninja) (exam
 --getCountryNinjasFromChar
 --getNinjaFromNinjaListWithName
 
-makeRoundBetweenCountries :: IO()
-makeRoundBetweenCountries = return ()
+makeRoundBetweenCountries :: Ninjas -> IO()
+makeRoundBetweenCountries ninjas = do
+    putStrLn "Enter the first country code: "
+    ninja1_c <- getLine
+    putStrLn "Enter the country code: "
+    ninja2_c <- getLine
+    let ninja1 = getOneNinja (getCountryNinjasFromChar ninjas (ninja1_c !! 0))
+    let ninja2 = getOneNinja (getCountryNinjasFromChar ninjas (ninja2_c !! 0))
+    let ninja1_score = getScore ninja1
+    let ninja2_score = getScore ninja2
+    let (fire, lightning, water, wind, earth) = ninjas
+    let allNinjas = merge' (merge' (merge' (merge' fire lightning) water) wind) earth
+    -- putStrLn show (ninja1 == ninja2)
+    if ninja1_score > ninja2_score
+        then do
+            let ninja1' = winRound ninja1
+            let ninjas' = (updateNinjaLists allNinjas ninja1' ninja2)
+            putStrLn ("Winner: " ++ (name ninja1') ++ ", Round: " ++ show (r ninja1') ++ ", Status: " ++ (status ninja1'))
+            mainLoop ninjas'
+        else if ninja2_score > ninja1_score
+            then do
+                let ninja2' = winRound ninja2
+                let ninjas' = (updateNinjaLists allNinjas ninja2' ninja1)
+                putStrLn ("Winner: " ++ (name ninja2') ++ ", Round: " ++ show (r ninja2') ++ ", Status: " ++ (status ninja2'))
+                mainLoop ninjas'
+            else do
+                let sumAbilities1 =  abilityToScore (ability1 ninja1) + abilityToScore (ability2 ninja1)
+                let sumAbilities2 = abilityToScore (ability1 ninja2) + abilityToScore (ability2 ninja2)
+                if sumAbilities1 > sumAbilities2
+                    then do
+                        let ninja1' = winRound ninja1
+                        let ninjas' = (updateNinjaLists allNinjas ninja1' ninja2)
+                        putStrLn ("Winner: " ++ (name ninja1') ++ ", Round: " ++ show (r ninja1') ++ ", Status: " ++ (status ninja1'))
+                        mainLoop ninjas'
+                    else do
+                        let ninja2' = winRound ninja2
+                        let ninjas' = (updateNinjaLists allNinjas ninja2' ninja1)
+                        putStrLn ("Winner: " ++ (name ninja2') ++ ", Round: " ++ show (r ninja2') ++ ", Status: " ++ (status ninja2'))
+                        mainLoop ninjas'
 
 
 
