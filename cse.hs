@@ -27,6 +27,8 @@ data Ninja = Ninja {name:: String, country:: Char,
 --     deriving (Eq,Show)
 
 
+type Ninjas = ([Ninja], [Ninja], [Ninja], [Ninja], [Ninja])
+
 
 
 fillNinjas :: [String] -> [Ninja]
@@ -74,6 +76,34 @@ getOneNinja   []                              = error ("Invalid Ninja Name with 
 getOneNinja   (x:xs)                          = x
 
 
+getJourneymansOfList :: [Ninja] -> [Ninja]
+getJourneymansOfList = filter (\a -> status a == "Journeyman")
+
+
+getScore :: Ninja -> Float
+getScore ninja = 0.5 * (exam1 ninja) + 0.3 * (exam2 ninja) + ability1' + ability2' + round'
+    where 
+        ability1' = abilityToScore (ability1 ninja)
+        ability2' = abilityToScore (ability2 ninja)
+        round'    = 10.0 * fromInteger (toInteger (r ninja))::Float
+
+
+abilityToScore :: String -> Float
+abilityToScore ability = case ability of
+    "Clone"     -> 20.0
+    "Hit"       -> 10.0
+    "Lightning" -> 50.0
+    "Vision"    -> 30.0
+    "Sand"      -> 50.0
+    "Fire"      -> 40.0
+    "Water"     -> 30.0
+    "Blade"     -> 20.0
+    "Summon"    -> 50.0
+    "Storm"     -> 10.0
+    "Rock"      -> 20.0
+    _           -> error "Unknown Ability"
+
+
 fillNinjaHelper :: String -> Ninja
 fillNinjaHelper n = Ninja (ninjaName) (ninjaCountry) "Junior" (ninjaExam1) (ninjaExam2) (ninjaAbility1) (ninjaAbility2) 0
     where
@@ -97,68 +127,31 @@ fillNinjaHelper n = Ninja (ninjaName) (ninjaCountry) "Junior" (ninjaExam1) (ninj
         ninjaAbility2 = items !! 5
 
 
-type Ninjas = ([Ninja], [Ninja], [Ninja], [Ninja], [Ninja])
+
+
+updateNinjaLists :: [Ninja] -> Ninja -> Ninja -> Ninjas
+updateNinjaLists ninjaList winner loser = ninjas
+    where
+        updateAfterWin = winner : (filter (\a -> not ((name a) == (name winner) && (country a) == (country winner))) ninjaList)
+        updateAfterLost = (filter (\a -> not ((name a) == (name loser) && (country a) == (country loser))) updateAfterWin)
+        fire = iSort' ordering (filter (\a -> country a == 'F') updateAfterLost)
+        lightning = iSort' ordering (filter (\a -> country a == 'L') updateAfterLost)
+        water = iSort' ordering (filter (\a -> country a == 'W') updateAfterLost)
+        wind = iSort' ordering (filter (\a -> country a == 'N') updateAfterLost)
+        earth = iSort' ordering (filter (\a -> country a == 'E') updateAfterLost)
+
+        ninjas = (fire, lightning, water, wind, earth)
 
 
 
-mainLoop :: Ninjas -> IO()
-mainLoop ninjas = do
-    putStrLn "a) View a Country's Ninja Information"
-    putStrLn "b) View All Countries' Ninja Information"
-    putStrLn "c) Make a Round Between Ninjas"
-    putStrLn "d) Make a Round Between Countries"
-    putStrLn "e) Exit"
-    putStrLn "Enter the action:"
-    action <- getLine
-    if action == "a" || action == "A"
-        then do
-            viewCountrysNinjaInformation ninjas
-        else if action == "b" || action == "B"
-            then do
-                viewAllCountrysNinjaInformation ninjas
-            else if action == "c" || action == "C"
-                then do
-                    makeRoundBetweenNinjas ninjas
-                else if action == "d" || action == "D"
-                    then do 
-                        makeRoundBetweenCountries ninjas
-                    else if action == "e" || action == "E"
-                        then return ()
-                        else
-                            do
-                                putStrLn "Error! Proper inputs [a/A, b/B, c/C, d/D, e/E]"
+winRound :: Ninja -> Ninja
+winRound ninja = Ninja (name ninja) (country ninja) (status) (exam1 ninja) (exam2 ninja) (ability1 ninja) (ability2 ninja) (round)
+    where
+        status = if (r ninja) == 2
+            then "Journeyman"
+            else "Junior"
+        round = (r ninja) + 1
 
-
-                
-viewCountrysNinjaInformation :: Ninjas -> IO()
-viewCountrysNinjaInformation ninjas = do
-    putStrLn "Enter the country code: "
-    input <- getLine
-    let country = input !! 0
-    printCountrysNinjaInformation (getCountryNinjasFromChar ninjas country)
-    mainLoop ninjas
-
-        where    
-            printCountrysNinjaInformation :: [Ninja] -> IO()
-            printCountrysNinjaInformation ninjas = do
-                putStrLn (shower ninjas)
-                    where
-                        shower :: [Ninja] -> String
-                        shower []       = ""
-                        shower [ninja]  = showerHelper ninja
-                        shower (n:ns)   = showerHelper n ++ shower ns
-                            
-                        showerHelper :: Ninja -> String
-                        showerHelper ninja = (name ninja) ++ ", Score: " ++  show (getScore ninja) ++ ", Status: " ++ (status ninja) ++ ", Round: " ++ show (r ninja) ++ "\n" ++ toAppend
-                            where
-                                toAppend = if (status ninja) == "Journeyman"
-                                            then (countryToString (country ninja)) ++ " country cannot be included in a fight\n"
-                                            else ""
-
-                -- putStrLn ((name (ordered !! 0)) ++ show (getScore (ordered !! 0)))
-                -- putStrLn ((name (ordered !! 1)) ++ show (getScore (ordered !! 1)))
-                -- putStrLn ((name (ordered !! 2)) ++ show (getScore (ordered !! 2)))
-                -- putStrLn "aloo"
 
 
 ordering :: Ninja -> Ninja -> Bool
@@ -191,32 +184,40 @@ iSort' p [] = []
 iSort' p (x:xs) = ins' p x (iSort' p xs)
 
 
-
-getScore :: Ninja -> Float
-getScore ninja = 0.5 * (exam1 ninja) + 0.3 * (exam2 ninja) + ability1' + ability2' + round'
-    where 
-        ability1' = abilityToScore (ability1 ninja)
-        ability2' = abilityToScore (ability2 ninja)
-        round'    = 10.0 * fromInteger (toInteger (r ninja))::Float
+merge' [] ys = ys
+merge' (x:xs) ys = x:merge' ys xs
 
 
-abilityToScore :: String -> Float
-abilityToScore ability = case ability of
-    "Clone"     -> 20.0
-    "Hit"       -> 10.0
-    "Lightning" -> 50.0
-    "Vision"    -> 30.0
-    "Sand"      -> 50.0
-    "Fire"      -> 40.0
-    "Water"     -> 30.0
-    "Blade"     -> 20.0
-    "Summon"    -> 50.0
-    "Storm"     -> 10.0
-    "Rock"      -> 20.0
-    _           -> error "Unknown Ability"
+-- a                
+viewCountrysNinjaInformation :: Ninjas -> IO()
+viewCountrysNinjaInformation ninjas = do
+    putStrLn "Enter the country code: "
+    input <- getLine
+    let country = input !! 0
+    printCountrysNinjaInformation (getCountryNinjasFromChar ninjas country)
+    mainLoop ninjas
+
+        where    
+            printCountrysNinjaInformation :: [Ninja] -> IO()
+            printCountrysNinjaInformation ninjas = do
+                putStrLn (shower ninjas)
+                    where
+                        shower :: [Ninja] -> String
+                        shower []       = ""
+                        shower [ninja]  = showerHelper ninja
+                        shower (n:ns)   = showerHelper n ++ shower ns
+                            
+                        showerHelper :: Ninja -> String
+                        showerHelper ninja = (name ninja) ++ ", Score: " ++  show (getScore ninja) ++ ", Status: " ++ (status ninja) ++ ", Round: " ++ show (r ninja) ++ "\n" ++ toAppend
+                            where
+                                toAppend = if (status ninja) == "Journeyman"
+                                            then (countryToString (country ninja)) ++ " country cannot be included in a fight\n"
+                                            else ""
 
 
 
+
+-- b
 viewAllCountrysNinjaInformation :: Ninjas -> IO()
 viewAllCountrysNinjaInformation ninjas = do
     let (fire, lightning, water, wind, earth) = ninjas
@@ -234,10 +235,8 @@ viewAllCountrysNinjaInformation ninjas = do
             showerHelper :: Ninja -> String
             showerHelper ninja = (name ninja) ++ ", Score: " ++  show (getScore ninja) ++ ", Status: " ++ (status ninja) ++ ", Round: " ++ show (r ninja) ++ "\n"
 
-merge' [] ys = ys
-merge' (x:xs) ys = x:merge' ys xs
 
-
+-- c
 makeRoundBetweenNinjas :: Ninjas -> IO()
 makeRoundBetweenNinjas ninjas = do
     putStrLn "Enter the name of the first ninja: "
@@ -283,34 +282,7 @@ makeRoundBetweenNinjas ninjas = do
                         mainLoop ninjas'
 
 
-updateNinjaLists :: [Ninja] -> Ninja -> Ninja -> Ninjas
-updateNinjaLists ninjaList winner loser = ninjas
-    where
-        updateAfterWin = winner : (filter (\a -> not ((name a) == (name winner) && (country a) == (country winner))) ninjaList)
-        updateAfterLost = (filter (\a -> not ((name a) == (name loser) && (country a) == (country loser))) updateAfterWin)
-        fire = iSort' ordering (filter (\a -> country a == 'F') updateAfterLost)
-        lightning = iSort' ordering (filter (\a -> country a == 'L') updateAfterLost)
-        water = iSort' ordering (filter (\a -> country a == 'W') updateAfterLost)
-        wind = iSort' ordering (filter (\a -> country a == 'N') updateAfterLost)
-        earth = iSort' ordering (filter (\a -> country a == 'E') updateAfterLost)
-
-        ninjas = (fire, lightning, water, wind, earth)
-
-
-
-winRound :: Ninja -> Ninja
-winRound ninja = Ninja (name ninja) (country ninja) (status) (exam1 ninja) (exam2 ninja) (ability1 ninja) (ability2 ninja) (round)
-    where
-        status = if (r ninja) == 2
-            then "Journeyman"
-            else "Junior"
-        round = (r ninja) + 1
-
-
-
---getCountryNinjasFromChar
---getNinjaFromNinjaListWithName
-
+-- d
 makeRoundBetweenCountries :: Ninjas -> IO()
 makeRoundBetweenCountries ninjas = do
     putStrLn "Enter the first country code: "
@@ -352,10 +324,54 @@ makeRoundBetweenCountries ninjas = do
                         mainLoop ninjas'
 
 
+exit :: Ninjas -> IO()
+exit ninjas = do
+    let (fire, lightning, water, wind, earth) = ninjas
+    let allNinjas = merge' (merge' (merge' (merge' fire lightning) water) wind) earth
+    let allJourneyMans = getJourneymansOfList allNinjas
+    let toPrint = (showJournaymans' (iSort' ordering allJourneyMans))
+    putStr toPrint
+    return()
+    where
+        showJournaymans' :: [Ninja] -> String
+        showJournaymans' []     = ""
+        showJournaymans' (n:ns) = ((name n) ++ ", Score: " ++ show (getScore n) ++ ", Status: " ++ (status n) ++ ", Round: " ++ show (r n) ++ "\n") ++ showJournaymans' ns 
+
+
+mainLoop :: Ninjas -> IO()
+mainLoop ninjas = do
+    putStrLn "a) View a Country's Ninja Information"
+    putStrLn "b) View All Countries' Ninja Information"
+    putStrLn "c) Make a Round Between Ninjas"
+    putStrLn "d) Make a Round Between Countries"
+    putStrLn "e) Exit"
+    putStrLn "Enter the action:"
+    action <- getLine
+    if action == "a" || action == "A"
+        then do
+            viewCountrysNinjaInformation ninjas
+        else if action == "b" || action == "B"
+            then do
+                viewAllCountrysNinjaInformation ninjas
+            else if action == "c" || action == "C"
+                then do
+                    makeRoundBetweenNinjas ninjas
+                else if action == "d" || action == "D"
+                    then do 
+                        makeRoundBetweenCountries ninjas
+                    else if action == "e" || action == "E"
+                        then do
+                        exit ninjas
+                        else
+                            do
+                                putStrLn "Error! Proper inputs [a/A, b/B, c/C, d/D, e/E]"
+
+
+
+
 
 main :: IO()
 main = do
-
     args <- getArgs
     let fileName = head args
     handle <- openFile fileName ReadMode
