@@ -41,7 +41,7 @@ countryToString c
     | c == 'w' || c == 'W' = "Water"
     | c == 'n' || c == 'N' = "Wind"
     | c == 'f' || c == 'F' = "Fire"
-    | otherwise            = error "Invalid Country name with " ++ c
+    | otherwise            = error "Invalid Country name with " ++ [c]
 
 getCountryNinjasFromChar :: Ninjas -> Char -> [Ninja]
 getCountryNinjasFromChar (fire, lightning, water, wind, earth) c
@@ -50,7 +50,7 @@ getCountryNinjasFromChar (fire, lightning, water, wind, earth) c
     | elem c ['w', 'W'] = water
     | elem c ['n', 'N'] = wind
     | elem c ['f', 'F'] = fire
-    | otherwise         = error "Invalid Country Name with " ++ c
+    | otherwise         = error "Invalid Country Name"
 
 
 getNinjaFromNinjaListWithName :: [Ninja] -> String -> Ninja
@@ -105,7 +105,7 @@ mainLoop ninjas = do
                 viewAllCountrysNinjaInformation ninjas
             else if action == "c" || action == "C"
                 then do
-                    makeRoundBetweenNinjas
+                    makeRoundBetweenNinjas ninjas
                 else if action == "d" || action == "D"
                     then do 
                         makeRoundBetweenCountries
@@ -225,8 +225,57 @@ viewAllCountrysNinjaInformation ninjas = do
 
 
 
-makeRoundBetweenNinjas :: IO()
-makeRoundBetweenNinjas = return ()
+makeRoundBetweenNinjas :: Ninjas -> IO()
+makeRoundBetweenNinjas ninjas = do
+    putStrLn "Enter the name of the first ninja: "
+    ninja1_name <- getLine
+    putStrLn "Enter the country code: "
+    ninja1_c <- getLine
+    let ninja1 = getNinjaFromNinjaListWithName (getCountryNinjasFromChar ninjas (ninja1_c !! 0)) ninja1_name
+    putStrLn "Enter the name of the second ninja: "
+    ninja2_name <- getLine
+    putStrLn "Enter the country code: "
+    ninja2_c <- getLine
+    let ninja2 = getNinjaFromNinjaListWithName (getCountryNinjasFromChar ninjas (ninja2_c !! 0)) ninja2_name
+    let ninja1_score = getScore ninja1
+    let ninja2_score = getScore ninja2
+
+    if ninja1_score > ninja2_score
+        then do
+            let ninja1' = winRound ninja1
+            putStrLn ("Winner: " ++ (name ninja1') ++ ", Round: " ++ show (r ninja1') ++ ", Status: " ++ (status ninja1'))
+        else if ninja2_score > ninja1_score
+            then do
+                let ninja2' = winRound ninja2
+                putStrLn ("Winner: " ++ (name ninja2') ++ ", Round: " ++ show (r ninja2') ++ ", Status: " ++ (status ninja2'))
+            else do
+                let sumAbilities1 =  abilityToScore (ability1 ninja1) + abilityToScore (ability2 ninja1)
+                let sumAbilities2 = abilityToScore (ability1 ninja2) + abilityToScore (ability2 ninja2)
+                if sumAbilities1 > sumAbilities2
+                    then do
+                        let ninja1' = winRound ninja1
+                        putStrLn ("Winner: " ++ (name ninja1') ++ ", Round: " ++ show (r ninja1') ++ ", Status: " ++ (status ninja1'))
+                    else do
+                        let ninja2' = winRound ninja2
+                        putStrLn ("Winner: " ++ (name ninja2') ++ ", Round: " ++ show (r ninja2') ++ ", Status: " ++ (status ninja2'))
+    mainLoop ninjas
+
+winRound :: Ninja -> Ninja
+winRound ninja = Ninja (name ninja) (country ninja) (status) (exam1 ninja) (exam2 ninja) (ability1 ninja) (ability2 ninja) (round)
+    where
+        status = if (r ninja) == 2
+            then "Journeyman"
+            else "Junior"
+        round = (r ninja) + 1
+
+updateNinjas :: [Ninja] -> Ninja -> [Ninja]
+updateNinjas ninjas ninja = ninja : (filter (\a -> (name a) /= (name ninja)) ninjas)
+
+deleteNinja :: [Ninja] -> Ninja -> [Ninja]
+deleteNinja ninjas ninja = (filter (\a -> (name a) /= (name ninja)) ninjas)
+
+--getCountryNinjasFromChar
+--getNinjaFromNinjaListWithName
 
 makeRoundBetweenCountries :: IO()
 makeRoundBetweenCountries = return ()
@@ -257,5 +306,3 @@ main = do
 
     return ()
  
-
-        
