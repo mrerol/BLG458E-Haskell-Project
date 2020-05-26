@@ -338,6 +338,21 @@ exit ninjas = do
         showJournaymans' (n:ns) = ((name n) ++ ", Score: " ++ show (getScore n) ++ ", Status: " ++ (status n) ++ ", Round: " ++ show (r n) ++ "\n") ++ showJournaymans' ns 
 
 
+errorMessage :: Ninjas -> IO()
+errorMessage ninjas = do
+                        putStrLn "Error! Proper inputs [a/A, b/B, c/C, d/D, e/E]"
+                        mainLoop ninjas
+
+mainLoopHandler :: Char -> (Ninjas -> IO())
+mainLoopHandler c
+    | elem c ['a', 'A'] = viewCountrysNinjaInformation
+    | elem c ['b', 'B'] = viewAllCountrysNinjaInformation
+    | elem c ['c', 'C'] = makeRoundBetweenNinjas
+    | elem c ['d', 'D'] = makeRoundBetweenCountries
+    | elem c ['e', 'E'] = exit
+    | otherwise         = errorMessage
+    
+
 mainLoop :: Ninjas -> IO()
 mainLoop ninjas = do
     putStrLn "a) View a Country's Ninja Information"
@@ -347,25 +362,7 @@ mainLoop ninjas = do
     putStrLn "e) Exit"
     putStrLn "Enter the action:"
     action <- getLine
-    if action == "a" || action == "A"
-        then do
-            viewCountrysNinjaInformation ninjas
-        else if action == "b" || action == "B"
-            then do
-                viewAllCountrysNinjaInformation ninjas
-            else if action == "c" || action == "C"
-                then do
-                    makeRoundBetweenNinjas ninjas
-                else if action == "d" || action == "D"
-                    then do 
-                        makeRoundBetweenCountries ninjas
-                    else if action == "e" || action == "E"
-                        then do
-                        exit ninjas
-                        else
-                            do
-                                putStrLn "Error! Proper inputs [a/A, b/B, c/C, d/D, e/E]"
-
+    (mainLoopHandler (action !! 0)) ninjas
 
 
 
