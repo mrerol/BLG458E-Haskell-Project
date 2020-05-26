@@ -28,6 +28,7 @@ data Ninja = Ninja {name:: String, country:: Char,
 
 
 
+
 fillNinjas :: [String] -> [Ninja]
 fillNinjas []           = []
 fillNinjas [n]          = [fillNinjaHelper n]
@@ -53,11 +54,19 @@ getCountryNinjasFromChar (fire, lightning, water, wind, earth) c
     | otherwise         = error "Invalid Country Name"
 
 
+
 getNinjaFromNinjaListWithName :: [Ninja] -> String -> Ninja
 getNinjaFromNinjaListWithName [] search     = error ("Invalid Ninja Name with " ++ search)
 getNinjaFromNinjaListWithName (n:ns) search = if name n == search
                                                 then n
                                                 else getNinjaFromNinjaListWithName ns search
+
+
+getNinjaFromNameAndCountry :: [Ninja] -> String -> Char -> Ninja
+getNinjaFromNameAndCountry [] _ _                          = error ("Invalid Ninja Name with ")
+getNinjaFromNameAndCountry (n:ns) searchName searchCountry = if ((name n) == searchName) && ((country n) == searchCountry)
+                                                                then n
+                                                                else getNinjaFromNameAndCountry ns searchName searchCountry
 
 
 
@@ -128,8 +137,7 @@ viewCountrysNinjaInformation ninjas = do
         where    
             printCountrysNinjaInformation :: [Ninja] -> IO()
             printCountrysNinjaInformation ninjas = do
-                let ordered = iSort' ordering ninjas
-                putStrLn (shower ordered)
+                putStrLn (shower ninjas)
                     where
                         shower :: [Ninja] -> String
                         shower []       = ""
@@ -140,7 +148,7 @@ viewCountrysNinjaInformation ninjas = do
                         showerHelper ninja = (name ninja) ++ ", Score: " ++  show (getScore ninja) ++ ", Status: " ++ (status ninja) ++ ", Round: " ++ show (r ninja) ++ "\n" ++ toAppend
                             where
                                 toAppend = if (status ninja) == "Journeyman"
-                                            then (countryToString (country ninja)) ++ "country cannot be included in a fight\n"
+                                            then (countryToString (country ninja)) ++ " country cannot be included in a fight\n"
                                             else ""
 
                 -- putStrLn ((name (ordered !! 0)) ++ show (getScore (ordered !! 0)))
@@ -155,14 +163,16 @@ ordering n0 n1 = result
         n0Score = getScore n0
         n1Score = getScore n1
         
-        roundFlag = r n0 < r n1
-        scoreFlag = n0Score > n1Score
+        result = if r n0 < r n1
+                    then True
+                    else if r n0 == r n1
+                        then if n0Score > n1Score
+                            then True
+                            else False
+                    else 
+                        False
 
-        result 
-            | roundFlag == True     = True
-            | scoreFlag == True     = True
-            | scoreFlag == False    = False
-            | otherwise             = False
+
 
 
 ins' :: (Ninja -> Ninja -> Bool) -> Ninja -> [Ninja] -> [Ninja]
@@ -208,13 +218,10 @@ viewAllCountrysNinjaInformation ninjas = do
     let (fire, lightning, water, wind, earth) = ninjas
     let allNinjas = merge' (merge' (merge' (merge' fire lightning) water) wind) earth
         
-
-
     let ordered = iSort' ordering allNinjas
     putStrLn (shower ordered)
+    mainLoop ninjas
         where
-            merge' [] ys = ys
-            merge' (x:xs) ys = x:merge' ys xs
             shower :: [Ninja] -> String
             shower []       = ""
             shower [ninja]  = showerHelper ninja
@@ -223,6 +230,8 @@ viewAllCountrysNinjaInformation ninjas = do
             showerHelper :: Ninja -> String
             showerHelper ninja = (name ninja) ++ ", Score: " ++  show (getScore ninja) ++ ", Status: " ++ (status ninja) ++ ", Round: " ++ show (r ninja) ++ "\n"
 
+merge' [] ys = ys
+merge' (x:xs) ys = x:merge' ys xs
 
 
 makeRoundBetweenNinjas :: Ninjas -> IO()
@@ -239,26 +248,51 @@ makeRoundBetweenNinjas ninjas = do
     let ninja2 = getNinjaFromNinjaListWithName (getCountryNinjasFromChar ninjas (ninja2_c !! 0)) ninja2_name
     let ninja1_score = getScore ninja1
     let ninja2_score = getScore ninja2
-
+    let (fire, lightning, water, wind, earth) = ninjas
+    let allNinjas = merge' (merge' (merge' (merge' fire lightning) water) wind) earth
+    -- putStrLn show (ninja1 == ninja2)
     if ninja1_score > ninja2_score
         then do
             let ninja1' = winRound ninja1
+            let ninjas' = (updateNinjaLists allNinjas ninja1' ninja2)
             putStrLn ("Winner: " ++ (name ninja1') ++ ", Round: " ++ show (r ninja1') ++ ", Status: " ++ (status ninja1'))
+            mainLoop ninjas'
         else if ninja2_score > ninja1_score
             then do
                 let ninja2' = winRound ninja2
+                let ninjas' = (updateNinjaLists allNinjas ninja2' ninja1)
                 putStrLn ("Winner: " ++ (name ninja2') ++ ", Round: " ++ show (r ninja2') ++ ", Status: " ++ (status ninja2'))
+                mainLoop ninjas'
             else do
                 let sumAbilities1 =  abilityToScore (ability1 ninja1) + abilityToScore (ability2 ninja1)
                 let sumAbilities2 = abilityToScore (ability1 ninja2) + abilityToScore (ability2 ninja2)
                 if sumAbilities1 > sumAbilities2
                     then do
                         let ninja1' = winRound ninja1
+                        let ninjas' = (updateNinjaLists allNinjas ninja1' ninja2)
                         putStrLn ("Winner: " ++ (name ninja1') ++ ", Round: " ++ show (r ninja1') ++ ", Status: " ++ (status ninja1'))
+                        mainLoop ninjas'
                     else do
                         let ninja2' = winRound ninja2
+                        let ninjas' = (updateNinjaLists allNinjas ninja2' ninja1)
                         putStrLn ("Winner: " ++ (name ninja2') ++ ", Round: " ++ show (r ninja2') ++ ", Status: " ++ (status ninja2'))
-    mainLoop ninjas
+                        mainLoop ninjas'
+
+
+updateNinjaLists :: [Ninja] -> Ninja -> Ninja -> Ninjas
+updateNinjaLists ninjaList winner loser = ninjas
+    where
+        updateAfterWin = winner : (filter (\a -> not ((name a) == (name winner) && (country a) == (country winner))) ninjaList)
+        updateAfterLost = (filter (\a -> not ((name a) == (name loser) && (country a) == (country loser))) updateAfterWin)
+        fire = iSort' ordering (filter (\a -> country a == 'F') updateAfterLost)
+        lightning = iSort' ordering (filter (\a -> country a == 'L') updateAfterLost)
+        water = iSort' ordering (filter (\a -> country a == 'W') updateAfterLost)
+        wind = iSort' ordering (filter (\a -> country a == 'N') updateAfterLost)
+        earth = iSort' ordering (filter (\a -> country a == 'E') updateAfterLost)
+
+        ninjas = (fire, lightning, water, wind, earth)
+
+
 
 winRound :: Ninja -> Ninja
 winRound ninja = Ninja (name ninja) (country ninja) (status) (exam1 ninja) (exam2 ninja) (ability1 ninja) (ability2 ninja) (round)
@@ -268,11 +302,7 @@ winRound ninja = Ninja (name ninja) (country ninja) (status) (exam1 ninja) (exam
             else "Junior"
         round = (r ninja) + 1
 
-updateNinjas :: [Ninja] -> Ninja -> [Ninja]
-updateNinjas ninjas ninja = ninja : (filter (\a -> (name a) /= (name ninja)) ninjas)
 
-deleteNinja :: [Ninja] -> Ninja -> [Ninja]
-deleteNinja ninjas ninja = (filter (\a -> (name a) /= (name ninja)) ninjas)
 
 --getCountryNinjasFromChar
 --getNinjaFromNinjaListWithName
@@ -294,11 +324,11 @@ main = do
     
     
 
-    let fire = filter (\a -> country a == 'F') ninjas
-    let lightning = filter (\a -> country a == 'L') ninjas
-    let water = filter (\a -> country a == 'W') ninjas
-    let wind = filter (\a -> country a == 'N') ninjas
-    let earth = filter (\a -> country a == 'E') ninjas
+    let fire = iSort' ordering (filter (\a -> country a == 'F') ninjas)
+    let lightning = iSort' ordering (filter (\a -> country a == 'L') ninjas)
+    let water = iSort' ordering (filter (\a -> country a == 'W') ninjas)
+    let wind = iSort' ordering (filter (\a -> country a == 'N') ninjas)
+    let earth = iSort' ordering (filter (\a -> country a == 'E') ninjas)
 
     
 
