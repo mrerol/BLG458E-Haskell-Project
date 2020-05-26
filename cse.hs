@@ -261,16 +261,13 @@ viewCountrysNinjaInformation ninjas = do
         else do
             printCountrysNinjaInformation (getCountryNinjasFromChar ninjas (input !! 0))
             mainLoop ninjas
-
         where    
             printCountrysNinjaInformation :: [Ninja] -> IO()
             printCountrysNinjaInformation ninjas = do
-                putStrLn (shower ninjas)
+                putStr (shower ninjas)
                     where
                         shower :: [Ninja] -> String
-                        shower []       = ""
-                        -- shower [ninja]  = showerHelper ninja
-                        shower (n:ns)   = showerHelper n ++ shower ns
+                        shower = concat . map (showerHelper)
                             
                         showerHelper :: Ninja -> String
                         showerHelper ninja = (name ninja) ++ ", Score: " ++  show (getScore ninja) ++ ", Status: " ++ (status ninja) ++ ", Round: " ++ show (r ninja) ++ "\n" ++ toAppend
@@ -284,16 +281,11 @@ viewCountrysNinjaInformation ninjas = do
 viewAllCountrysNinjaInformation :: Ninjas -> IO()
 viewAllCountrysNinjaInformation ninjas = do
     let ordered = sortAllNinjas ninjas
-    putStrLn (shower ordered)
+    putStr (shower ordered)
     mainLoop ninjas
         where
             shower :: [Ninja] -> String
-            shower []       = ""
-            -- shower [ninja]  = showerHelper ninja
-            shower (n:ns)   = showerHelper n ++ shower ns
-                
-            showerHelper :: Ninja -> String
-            showerHelper ninja = (name ninja) ++ ", Score: " ++  show (getScore ninja) ++ ", Status: " ++ (status ninja) ++ ", Round: " ++ show (r ninja) ++ "\n"
+            shower = concat . map (\a -> (name a) ++ ", Score: " ++  show (getScore a) ++ ", Status: " ++ (status a) ++ ", Round: " ++ show (r a) ++ "\n")
 
 
 -- c
