@@ -19,7 +19,6 @@ data Ninja = Ninja {name:: String, country:: Char,
 -- r is the number of rounds that the ninja took place. It is initialized as 0.
 
 
-
 -- data Country = Fire | Lightning | Water | Wind | Earth
 --     deriving (Eq,Show)
 
@@ -93,7 +92,7 @@ getNinjaFromNameAndCountry (n:ns) searchName searchCountry = if ((name n) == sea
 
 
 getOneNinja :: [Ninja] -> Ninja
-getOneNinja   []                              = error ("Empty List")
+getOneNinja   []                              = error "Empty List"
 getOneNinja   (x:xs)                          = x
 
 
@@ -196,46 +195,72 @@ winnerPrinter ninja = do
     putStrLn ("Winner: " ++ (name ninja) ++ ", Round: " ++ show (r ninja) ++ ", Status: " ++ (status ninja))
 
 
-makeRound :: Ninjas -> Ninja -> Ninja -> IO()
-makeRound ninjas ninja1 ninja2 = do
-    let ninja1_score = getScore ninja1
-    let ninja2_score = getScore ninja2
-    let allNinjas = ninjasToNinjaList ninjas
-    if ninja1_score > ninja2_score
+prepareRound :: Ninjas -> Ninja -> Ninja -> IO()
+prepareRound ninjas ninja1 ninja2 = do
+    
+    let j1_flag = length (getJourneymansOfList (getCountryNinjasFromChar ninjas (country ninja1))) > 0
+    let j2_flag = length (getJourneymansOfList (getCountryNinjasFromChar ninjas (country ninja2))) > 0
+
+    if j1_flag && j2_flag
         then do
-            let ninja1' = winRound ninja1
-            let ninjas' = (updateNinjaLists allNinjas ninja1' ninja2)
-            winnerPrinter ninja1'
-            mainLoop ninjas'
-        else if ninja2_score > ninja1_score
+            putStrLn ("Country of " ++ (countryToString (country ninja1)) ++ " and " ++ (countryToString (country ninja2)) ++ " cannot be included in a fight")
+            mainLoop ninjas
+        else if j1_flag
             then do
-                let ninja2' = winRound ninja2
-                let ninjas' = (updateNinjaLists allNinjas ninja2' ninja1)
-                winnerPrinter ninja2'
-                mainLoop ninjas'
-            else do
-                let sumAbilities1 =  abilityToScore (ability1 ninja1) + abilityToScore (ability2 ninja1)
-                let sumAbilities2 = abilityToScore (ability1 ninja2) + abilityToScore (ability2 ninja2)
-                if sumAbilities1 > sumAbilities2
+                putStrLn ("Country of " ++ (countryToString (country ninja1)) ++ " cannot be included in a fight")
+                mainLoop ninjas
+        else if j2_flag
+            then do
+                putStrLn ("Country of " ++ (countryToString (country ninja2)) ++ " cannot be included in a fight")
+                mainLoop ninjas
+        else do
+            makeRound ninjas ninja1 ninja2
+
+        where
+            makeRound :: Ninjas -> Ninja -> Ninja -> IO()
+            makeRound ninjas ninja1 ninja2 = do
+                let ninja1_score = getScore ninja1
+                let ninja2_score = getScore ninja2
+                let allNinjas = ninjasToNinjaList ninjas
+                if ninja1_score > ninja2_score
                     then do
                         let ninja1' = winRound ninja1
                         let ninjas' = (updateNinjaLists allNinjas ninja1' ninja2)
                         winnerPrinter ninja1'
                         mainLoop ninjas'
-                    else do
-                        let ninja2' = winRound ninja2
-                        let ninjas' = (updateNinjaLists allNinjas ninja2' ninja1)
-                        winnerPrinter ninja2'
-                        mainLoop ninjas'
+                    else if ninja2_score > ninja1_score
+                        then do
+                            let ninja2' = winRound ninja2
+                            let ninjas' = (updateNinjaLists allNinjas ninja2' ninja1)
+                            winnerPrinter ninja2'
+                            mainLoop ninjas'
+                        else do
+                            let sumAbilities1 =  abilityToScore (ability1 ninja1) + abilityToScore (ability2 ninja1)
+                            let sumAbilities2 = abilityToScore (ability1 ninja2) + abilityToScore (ability2 ninja2)
+                            if sumAbilities1 > sumAbilities2
+                                then do
+                                    let ninja1' = winRound ninja1
+                                    let ninjas' = (updateNinjaLists allNinjas ninja1' ninja2)
+                                    winnerPrinter ninja1'
+                                    mainLoop ninjas'
+                                else do
+                                    let ninja2' = winRound ninja2
+                                    let ninjas' = (updateNinjaLists allNinjas ninja2' ninja1)
+                                    winnerPrinter ninja2'
+                                    mainLoop ninjas'
 
 -- a                
 viewCountrysNinjaInformation :: Ninjas -> IO()
 viewCountrysNinjaInformation ninjas = do
     putStrLn "Enter the country code: "
     input <- getLine
-    let country = input !! 0
-    printCountrysNinjaInformation (getCountryNinjasFromChar ninjas country)
-    mainLoop ninjas
+    if not (length input == 1 && elem (input !! 0) ['F', 'f', 'E', 'e', 'W', 'w', 'N', 'n', 'L', 'l'])
+        then do 
+            putStrLn "Invalid Country code!"
+            mainLoop ninjas
+        else do
+            printCountrysNinjaInformation (getCountryNinjasFromChar ninjas (input !! 0))
+            mainLoop ninjas
 
         where    
             printCountrysNinjaInformation :: [Ninja] -> IO()
@@ -278,13 +303,54 @@ makeRoundBetweenNinjas ninjas = do
     ninja1_name <- getLine
     putStrLn "Enter the country code: "
     ninja1_c <- getLine
-    let ninja1 = getNinjaFromNinjaListWithName (getCountryNinjasFromChar ninjas (ninja1_c !! 0)) ninja1_name
-    putStrLn "Enter the name of the second ninja: "
-    ninja2_name <- getLine
-    putStrLn "Enter the country code: "
-    ninja2_c <- getLine
-    let ninja2 = getNinjaFromNinjaListWithName (getCountryNinjasFromChar ninjas (ninja2_c !! 0)) ninja2_name
-    makeRound ninjas ninja1 ninja2
+
+    if not (length ninja1_c == 1 && elem (ninja1_c !! 0) ['F', 'f', 'E', 'e', 'W', 'w', 'N', 'n', 'L', 'l'])
+        then do 
+            putStrLn "Invalid Country code!"
+            mainLoop ninjas
+        else do
+            if length (filter (\a -> (name a) == ninja1_name) (getCountryNinjasFromChar ninjas (ninja1_c !! 0))) < 1
+                then do
+                    putStrLn ("Ninja named " ++ (ninja1_name) ++ " with country " ++ (countryToString (ninja1_c !! 0)) ++ " is not in the list")
+                    mainLoop ninjas
+                else do
+
+                    putStrLn "Enter the name of the second ninja: "
+                    ninja2_name <- getLine
+                    putStrLn "Enter the country code: "
+                    ninja2_c <- getLine
+
+                    if not (length ninja2_c == 1 && elem (ninja2_c !! 0) ['F', 'f', 'E', 'e', 'W', 'w', 'N', 'n', 'L', 'l'])
+                        then do 
+                            putStrLn "Invalid Country code!"
+                            mainLoop ninjas
+                        else do
+
+                            if length (filter (\a -> (name a) == ninja2_name) (getCountryNinjasFromChar ninjas (ninja2_c !! 0))) < 1
+                                then do
+                                    putStrLn ("Ninja named " ++ (ninja2_name) ++ " with country " ++ (countryToString (ninja2_c !! 0)) ++ " is not in the list")
+                                    mainLoop ninjas
+                                else do
+
+                                    let c1_flag = length (getCountryNinjasFromChar ninjas (ninja1_c !! 0)) < 1
+                                    let c2_flag = length (getCountryNinjasFromChar ninjas (ninja2_c !! 0)) < 1
+
+                                    if c1_flag && c2_flag
+                                        then do
+                                            putStrLn ("Country of " ++ (countryToString (ninja1_c !! 0)) ++ " and " ++ (countryToString (ninja2_c !! 0)) ++ " is empty so cannot be included in a fight")
+                                            mainLoop ninjas
+                                        else if c1_flag
+                                            then do
+                                                putStrLn ("Country of " ++ (countryToString (ninja1_c !! 0)) ++ " is empty so cannot be included in a fight")
+                                                mainLoop ninjas
+                                        else if c2_flag
+                                            then do
+                                                putStrLn ("Country of " ++ (countryToString (ninja2_c !! 0)) ++ " is empty so cannot be included in a fight")
+                                                mainLoop ninjas
+                                        else do
+                                            let ninja1 = getNinjaFromNinjaListWithName (getCountryNinjasFromChar ninjas (ninja1_c !! 0)) ninja1_name
+                                            let ninja2 = getNinjaFromNinjaListWithName (getCountryNinjasFromChar ninjas (ninja2_c !! 0)) ninja2_name
+                                            prepareRound ninjas ninja1 ninja2
 
 
 -- d
@@ -292,11 +358,41 @@ makeRoundBetweenCountries :: Ninjas -> IO()
 makeRoundBetweenCountries ninjas = do
     putStrLn "Enter the first country code: "
     ninja1_c <- getLine
-    putStrLn "Enter the country code: "
-    ninja2_c <- getLine
-    let ninja1 = getOneNinja (getCountryNinjasFromChar ninjas (ninja1_c !! 0))
-    let ninja2 = getOneNinja (getCountryNinjasFromChar ninjas (ninja2_c !! 0))
-    makeRound ninjas ninja1 ninja2
+    if not (length ninja1_c == 1 && elem (ninja1_c !! 0) ['F', 'f', 'E', 'e', 'W', 'w', 'N', 'n', 'L', 'l'])
+        then do 
+            putStrLn "Invalid Country code!"
+            mainLoop ninjas
+        else do
+        putStrLn "Enter the country code: "
+        ninja2_c <- getLine
+
+        if not (length ninja2_c == 1 && elem (ninja2_c !! 0) ['F', 'f', 'E', 'e', 'W', 'w', 'N', 'n', 'L', 'l'])
+        then do 
+            putStrLn "Invalid Country code!"
+            mainLoop ninjas
+        else do
+            let c1_flag = length (getCountryNinjasFromChar ninjas (ninja1_c !! 0)) < 1
+            let c2_flag = length (getCountryNinjasFromChar ninjas (ninja2_c !! 0)) < 1
+
+            if c1_flag && c2_flag
+                then do
+                    putStrLn ("Country of " ++ (countryToString (ninja1_c !! 0)) ++ " and " ++ (countryToString (ninja2_c !! 0)) ++ " is empty so cannot be included in a fight")
+                    mainLoop ninjas
+                else if c1_flag
+                    then do
+                        putStrLn ("Country of " ++ (countryToString (ninja1_c !! 0)) ++ " is empty so cannot be included in a fight")
+                        mainLoop ninjas
+                else if c2_flag
+                    then do
+                        putStrLn ("Country of " ++ (countryToString (ninja2_c !! 0)) ++ " is empty so cannot be included in a fight")
+                        mainLoop ninjas
+                else do
+                    let ninja1 = getOneNinja (getCountryNinjasFromChar ninjas (ninja1_c !! 0))
+                    let ninja2 = getOneNinja (getCountryNinjasFromChar ninjas (ninja2_c !! 0))
+                    prepareRound ninjas ninja1 ninja2
+    
+
+
 
 -- e
 exit :: Ninjas -> IO()
