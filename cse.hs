@@ -55,7 +55,16 @@ fillNinjas (n:ns)       = fillNinjaHelper n : fillNinjas ns
         fillNinjaHelper :: String -> Ninja
         fillNinjaHelper n = Ninja (ninjaName) (ninjaCountry) "Junior" (ninjaExam1) (ninjaExam2) (ninjaAbility1) (ninjaAbility2) 0
         
+{-
+Function: countryToString
+    The function takes first letter of country as a char and returns the full country name as a string
 
+Input:
+    c(char): First letter of country as a char
+
+Return:
+    String: The full country name
+-}
 
 countryToString :: Char -> String
 countryToString c
@@ -66,6 +75,17 @@ countryToString c
     | c == 'f' || c == 'F' = "Fire"
     | otherwise            = error "Invalid Country name with " ++ [c]
 
+{-
+Function: getCountryNinjasFromChar
+    The function takes Ninjas and first letter of country as a char and returns list of ninjas that belongs to a country
+
+Input:
+    Ninjas: Tuple that contains all ninjas according to the their countr
+    c(char):First letter of country as a char
+
+Return:
+    returns: List of ninjas 
+-}
 getCountryNinjasFromChar :: Ninjas -> Char -> [Ninja]
 getCountryNinjasFromChar (fire, lightning, water, wind, earth) c
     | elem c ['e', 'E'] = earth
@@ -76,14 +96,35 @@ getCountryNinjasFromChar (fire, lightning, water, wind, earth) c
     | otherwise         = error "Invalid Country Name"
 
 
+{-
+Function: getNinjaFromNinjaListWithName
+    The function takes list of ninja, the ninja name and finds the searched ninja's name in the list and returns it in type Ninja
 
+Input:
+    Ninja(List): List of ninjas that belongs a country
+    ninja name(string):Ninja name as a string
+
+Return:
+    returns: searched ninja in type Ninja
+-}
 getNinjaFromNinjaListWithName :: [Ninja] -> String -> Ninja
 getNinjaFromNinjaListWithName [] search     = error ("Invalid Ninja Name with " ++ search)
 getNinjaFromNinjaListWithName (n:ns) search = if name n == search
                                                 then n
                                                 else getNinjaFromNinjaListWithName ns search
 
+{-
+Function: getNinjaFromNameAndCountry
+    The function takes list of ninja, the ninja name, first letter of country and finds the ninja in the list according to its name and country and returns it in type Ninja
 
+Input:
+    Ninja(List): List of ninjas that belongs a country
+    ninja name(string):Ninja name as a string
+    country(char):First letter of country as a char
+
+Return:
+    returns: searched ninja in type Ninja
+-}
 getNinjaFromNameAndCountry :: [Ninja] -> String -> Char -> Ninja
 getNinjaFromNameAndCountry [] _ _                          = error ("Invalid Ninja Name with ")
 getNinjaFromNameAndCountry (n:ns) searchName searchCountry = if ((name n) == searchName) && ((country n) == searchCountry)
@@ -91,15 +132,45 @@ getNinjaFromNameAndCountry (n:ns) searchName searchCountry = if ((name n) == sea
                                                                 else getNinjaFromNameAndCountry ns searchName searchCountry
 
 
+{-
+Function: getOneNinja
+    The function takes list of ninja and returns the first ninja in the list
+
+Input:
+    Ninja(List): List of ninjas that belongs to the country
+
+Return:
+    returns: ninja in type Ninja
+-}
 getOneNinja :: [Ninja] -> Ninja
 getOneNinja   []                              = error "Empty List"
 getOneNinja   (x:xs)                          = x
 
 
+{-
+Function: getJourneymansOfList
+    The function takes list of ninja and finds the journeymans in the given list and returns them
+
+Input:
+    Ninja(List): List of ninjas that belongs a country
+
+Return:
+    returns: List of Ninja
+-}
 getJourneymansOfList :: [Ninja] -> [Ninja]
 getJourneymansOfList = filter (\a -> status a == "Journeyman")
 
 
+{-
+Function: getScore
+    The function takes a ninja and calculate the score of the ninja
+
+Input:
+    Ninja(Ninja): A ninja in type Ninja
+
+Return:
+    returns: Ninja's score
+-}
 getScore :: Ninja -> Float
 getScore ninja = 0.5 * (exam1 ninja) + 0.3 * (exam2 ninja) + ability1' + ability2' + round'
     where 
@@ -108,6 +179,16 @@ getScore ninja = 0.5 * (exam1 ninja) + 0.3 * (exam2 ninja) + ability1' + ability
         round'    = 10.0 * fromInteger (toInteger (r ninja))::Float
 
 
+{-
+Function: abilityToScore
+    The function takes ability and returns impact of the ability
+
+Input:
+    Ability(String): Ability as a string
+
+Return:
+    returns: impact of the ability
+-}
 abilityToScore :: String -> Float
 abilityToScore ability = case ability of
     "Clone"     -> 20.0
@@ -124,7 +205,18 @@ abilityToScore ability = case ability of
     _           -> error "Unknown Ability"
 
 
+{-
+Function: updateNinjaLists
+    The function takes list of ninja, two opponents and returns the updated Ninjas according to result of round between ninjas
 
+Input:
+    Ninjas: Tuple that contains all ninjas according to the their country
+    ninja1(Ninja):Ninja that won the round
+    ninja2(Ninja):Ninja that lost the round
+
+Return:
+    returns: updated Ninjas
+-}
 updateNinjaLists :: [Ninja] -> Ninja -> Ninja -> Ninjas
 updateNinjaLists ninjaList winner loser = ninjas
     where
@@ -139,7 +231,16 @@ updateNinjaLists ninjaList winner loser = ninjas
         ninjas = (fire, lightning, water, wind, earth)
 
 
+{-
+Function: winRound
+    The function takes a ninja and returns the updates ninja with status and rank
 
+Input:
+    ninja(Ninja):Ninja that won the round
+
+Return:
+    returns: Updated ninja with status and rank.
+-}
 winRound :: Ninja -> Ninja
 winRound ninja = Ninja (name ninja) (country ninja) (status) (exam1 ninja) (exam2 ninja) (ability1 ninja) (ability2 ninja) (round)
     where
@@ -148,7 +249,16 @@ winRound ninja = Ninja (name ninja) (country ninja) (status) (exam1 ninja) (exam
             else "Junior"
         round = (r ninja) + 1
 
+{-
+Function: sortNinjas
+    The function takes list of ninja and returns sorted list of ninja
 
+Input:
+    List of Ninja: List of Ninja
+
+Return:
+    returns: Sorted list of Ninja.
+-}
 sortNinjas :: [Ninja] -> [Ninja]
 sortNinjas = iSort' ordering
     where
@@ -179,22 +289,63 @@ sortNinjas = iSort' ordering
                             else 
                                 False
 
+{-
+Function: ninjasToNinjaList
+    The function takes Ninjas and returns a list that contains all ninjas
 
+Input:
+   Ninjas Tuple that contains all ninjas according to the their country
+
+Return:
+    returns: List that contains all ninjas.
+-}
 ninjasToNinjaList :: Ninjas -> [Ninja]
 ninjasToNinjaList = concat . tupleToListOfList
     where
         tupleToListOfList :: Ninjas -> [[Ninja]]
         tupleToListOfList (a, b, c, d, e) = [a, b, c, d, e]
 
+{-
+Function: sortAllNinjas
+    The function takes Ninjas and returns sorted list that contains all ninjas
 
+Input:
+   Ninjas: Tuple that contains all ninjas according to the their country
+
+Return:
+    returns: Sorted list that contains all ninjas.
+-}
 sortAllNinjas :: Ninjas -> [Ninja]
 sortAllNinjas = sortNinjas . ninjasToNinjaList
 
+
+{-
+Function: winnerPrinter
+    The function takes a ninja and prints the winner ninja's information
+
+Input:
+   Ninja(Ninja): Tuple that contains all ninjas according to the their country
+
+Return:
+    returns: It prints ninja's information.
+-}
 winnerPrinter :: Ninja -> IO()
 winnerPrinter ninja = do
     putStrLn ("Winner: " ++ (name ninja) ++ ", Round: " ++ show (r ninja) ++ ", Status: " ++ (status ninja))
 
 
+{-
+Function: prepareRound
+    The function takes Ninjas, two opponents and prints a message if there is a obstacle to making round otherwise it calls the function that makes round.
+
+Input:
+    Ninjas: Tuple that contains all ninjas according to the their country
+    ninja1(Ninja): information of first ninja
+    ninja2(Ninja): information of second ninja
+
+Return:
+    returns: It prints error message if it is needed
+-}
 prepareRound :: Ninjas -> Ninja -> Ninja -> IO()
 prepareRound ninjas ninja1 ninja2 = do
     
@@ -249,6 +400,17 @@ prepareRound ninjas ninja1 ninja2 = do
                                     winnerPrinter ninja2'
                                     mainLoop ninjas'
 
+
+{-
+Function: viewCountrysNinjaInformation
+    The function takes Ninjas, input from user for selecting the country and shows all ninjas of that country in the CSE, according to their scores in descending order.
+
+Input:
+    Ninjas: Tuple that contains all ninjas according to the their country
+
+Return:
+    returns: It prints all ninjas of that country
+-}
 -- a                
 viewCountrysNinjaInformation :: Ninjas -> IO()
 viewCountrysNinjaInformation ninjas = do
@@ -277,6 +439,16 @@ viewCountrysNinjaInformation ninjas = do
                                             else ""
 
 
+{-
+Function: viewAllCountrysNinjaInformation
+    The function takes Ninjas and shows all ninjas according to ninja's scores in descending order and their number of rounds in ascending order
+
+Input:
+    Ninjas: Tuple that contains all ninjas according to the their country
+
+Return:
+    returns: It prints all ninjas
+-}
 -- b
 viewAllCountrysNinjaInformation :: Ninjas -> IO()
 viewAllCountrysNinjaInformation ninjas = do
@@ -288,6 +460,16 @@ viewAllCountrysNinjaInformation ninjas = do
             shower = concat . map (\a -> (name a) ++ ", Score: " ++  show (getScore a) ++ ", Status: " ++ (status a) ++ ", Round: " ++ show (r a) ++ "\n")
 
 
+{-
+Function: makeRoundBetweenNinjas
+    The function takes Ninjas, input from user for selecting the ninjas and makes round between them. After making round It shows the result
+
+Input:
+    Ninjas: Tuple that contains all ninjas according to the their country
+
+Return:
+    returns: It prints the result of round
+-}
 -- c
 makeRoundBetweenNinjas :: Ninjas -> IO()
 makeRoundBetweenNinjas ninjas = do
@@ -345,6 +527,17 @@ makeRoundBetweenNinjas ninjas = do
                                             prepareRound ninjas ninja1 ninja2
 
 
+{-
+Function: makeRoundBetweenNinjas
+    The function takes Ninjas, input from user for selecting countries and makes round between ninjas which are in the first place in their country list.
+    After making round It shows the result
+
+Input:
+    Ninjas Tuple that contains all ninjas according to the their country
+
+Return:
+    returns: It prints the result of round
+-}
 -- d
 makeRoundBetweenCountries :: Ninjas -> IO()
 makeRoundBetweenCountries ninjas = do
@@ -385,7 +578,16 @@ makeRoundBetweenCountries ninjas = do
     
 
 
+{-
+Function: makeRoundBetweenNinjas
+    The function takes Ninjas and shows all journeymen after that terminate the program
 
+Input:
+    Ninjas: Tuple that contains all ninjas according to the their country
+
+Return:
+    returns: It prints all journeymen
+-}
 -- e
 exit :: Ninjas -> IO()
 exit ninjas = do
@@ -400,12 +602,20 @@ exit ninjas = do
         showJournaymans' []     = ""
         showJournaymans' (n:ns) = ((name n) ++ ", Score: " ++ show (getScore n) ++ ", Status: " ++ (status n) ++ ", Round: " ++ show (r n) ++ "\n") ++ showJournaymans' ns 
 
+{-
+Function: errorMessage
+    Prints error message  
+-}
 -- otherwise
 errorMessage :: Ninjas -> IO()
 errorMessage ninjas = do
                         putStrLn "Error! Proper inputs [a/A, b/B, c/C, d/D, e/E]"
                         mainLoop ninjas
 
+{-
+Function: mainLoopHandler
+    The function takes a character which refers menu option and then calls appropriate function.
+-}
 mainLoopHandler :: Char -> (Ninjas -> IO())
 mainLoopHandler c
     | elem c ['a', 'A'] = viewCountrysNinjaInformation
@@ -415,7 +625,10 @@ mainLoopHandler c
     | elem c ['e', 'E'] = exit
     | otherwise         = errorMessage
     
-
+{-
+Function: mainLoop
+    The function prints the menu and takes action from the user, then calls the function mainLoopHandler to perform the appropriate function.  
+-}
 mainLoop :: Ninjas -> IO()
 mainLoop ninjas = do
     putStrLn "a) View a Country's Ninja Information"
